@@ -1,0 +1,6 @@
+Screenshots will be added here after capturing the application in action.
+
+Required screenshots:
+1. main.png - Main interface with URL input
+2. scanning.png - Scanning progress with phase indicators
+3. results.png - Results display with vulnerabilities
