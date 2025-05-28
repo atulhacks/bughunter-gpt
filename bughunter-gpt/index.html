@@ -21,7 +21,7 @@
             box-shadow: 0 0 15px rgba(0,0,0,0.1);
         }
         .results-container {
-            max-height: 500px;
+            max-height: 600px;
             overflow-y: auto;
         }
         .results-container::-webkit-scrollbar {
@@ -38,22 +38,209 @@
             background-color: rgba(255,255,255,0.1);
             border-radius: 0.375rem;
         }
+        .settings-panel {
+            position: fixed;
+            top: 0;
+            right: -320px;
+            width: 320px;
+            height: 100vh;
+            background-color: #2a2b38;
+            z-index: 50;
+            transition: right 0.3s ease-in-out;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.2);
+            overflow-y: auto;
+        }
+        .settings-panel.open {
+            right: 0;
+        }
+        .settings-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 40;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .settings-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .tooltip {
+            position: relative;
+        }
+        .tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #1f2937;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            z-index: 10;
+            margin-bottom: 0.25rem;
+        }
+        /* Light mode styles */
+        .light-mode {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .light-mode .textarea-container {
+            background-color: #ffffff;
+            border-color: rgba(0,0,0,0.1);
+        }
+        .light-mode .bg-\[\#40414f\] {
+            background-color: #ffffff !important;
+        }
+        .light-mode .bg-\[\#343541\] {
+            background-color: #f5f5f5 !important;
+        }
+        .light-mode .text-gray-100 {
+            color: #333 !important;
+        }
+        .light-mode .text-gray-300 {
+            color: #555 !important;
+        }
+        .light-mode .text-gray-400 {
+            color: #666 !important;
+        }
+        .light-mode .text-white {
+            color: #333 !important;
+        }
+        .light-mode .border-gray-600\/50 {
+            border-color: rgba(0,0,0,0.1) !important;
+        }
+        .light-mode .settings-panel {
+            background-color: #e5e5e5;
+        }
+        .light-mode .bg-gray-800\/50, 
+        .light-mode .bg-gray-800\/30, 
+        .light-mode .bg-gray-800\/20 {
+            background-color: rgba(240,240,240,0.8) !important;
+        }
     </style>
 </head>
 <body class="bg-[#343541] min-h-screen flex flex-col text-gray-100">
     <!-- Header -->
-    <header class="border-b border-gray-600/50 bg-[#343541]">
+    <header class="border-b border-gray-600/50 bg-[#343541] sticky top-0 z-10">
         <nav class="max-w-screen-xl mx-auto px-4 py-2 flex justify-between items-center">
             <div class="flex items-center gap-2">
                 <span class="text-2xl">🐛</span>
                 <span class="ml-2 text-xl font-semibold text-gray-300">BugHunter GPT</span>
             </div>
-            <div class="flex items-center gap-2">
-                <a href="#" class="text-gray-300 hover:text-white px-3 py-1.5 rounded-md transition-colors text-sm">GitHub</a>
-                <a href="#" class="bg-white text-gray-900 px-3 py-1.5 rounded-md hover:bg-gray-100 transition-colors text-sm font-medium">Documentation</a>
+            <div class="flex items-center gap-3">
+                <button id="historyButton" class="text-gray-300 hover:text-white px-3 py-1.5 rounded-md transition-colors text-sm flex items-center gap-1 tooltip" data-tooltip="View Scan History">
+                    <i class="fas fa-history"></i>
+                    <span class="hidden sm:inline">History</span>
+                </button>
+                <button id="themeToggle" class="text-gray-300 hover:text-white px-3 py-1.5 rounded-md transition-colors text-sm flex items-center gap-1 tooltip" data-tooltip="Toggle Light/Dark Mode">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button id="settingsButton" class="text-gray-300 hover:text-white px-3 py-1.5 rounded-md transition-colors text-sm flex items-center gap-1 tooltip" data-tooltip="Scan Settings">
+                    <i class="fas fa-cog"></i>
+                    <span class="hidden sm:inline">Settings</span>
+                </button>
+                <a href="https://github.com/atulhacks/bughunter-gpt" target="_blank" class="text-gray-300 hover:text-white px-3 py-1.5 rounded-md transition-colors text-sm flex items-center gap-1">
+                    <i class="fab fa-github"></i>
+                    <span class="hidden sm:inline">GitHub</span>
+                </a>
+                <a href="#" class="bg-white text-gray-900 px-3 py-1.5 rounded-md hover:bg-gray-100 transition-colors text-sm font-medium hidden sm:block">Documentation</a>
             </div>
         </nav>
     </header>
+
+    <!-- Settings Panel -->
+    <div id="settingsOverlay" class="settings-overlay"></div>
+    <div id="settingsPanel" class="settings-panel">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-semibold">Scan Settings</h2>
+                <button id="closeSettings" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-6">
+                <!-- GitHub API Settings -->
+                <div>
+                    <h3 class="text-lg font-medium mb-3 text-gray-300">GitHub API</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">GitHub Token (Optional)</label>
+                            <input type="password" id="githubToken" class="w-full bg-gray-700 text-white rounded-md px-3 py-2 text-sm" placeholder="For higher rate limits">
+                            <p class="text-xs text-gray-500 mt-1">Increases API rate limits. Keep private!</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Results Per Page</label>
+                            <select id="resultsPerPage" class="w-full bg-gray-700 text-white rounded-md px-3 py-2 text-sm">
+                                <option value="5">5</option>
+                                <option value="10" selected>10</option>
+                                <option value="20">20</option>
+                                <option value="30">30</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Max Pages to Fetch</label>
+                            <select id="maxPages" class="w-full bg-gray-700 text-white rounded-md px-3 py-2 text-sm">
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3" selected>3</option>
+                                <option value="5">5</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Scanner Settings -->
+                <div>
+                    <h3 class="text-lg font-medium mb-3 text-gray-300">Scanner</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Request Timeout (ms)</label>
+                            <input type="number" id="timeout" class="w-full bg-gray-700 text-white rounded-md px-3 py-2 text-sm" value="10000" min="1000" step="1000">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Max Pages to Scan</label>
+                            <input type="number" id="maxPagesToScan" class="w-full bg-gray-700 text-white rounded-md px-3 py-2 text-sm" value="20" min="5" max="50">
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="contentAnalysis" class="mr-2" checked>
+                            <label for="contentAnalysis" class="text-sm text-gray-400">Enable Content Analysis</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="headerAnalysis" class="mr-2" checked>
+                            <label for="headerAnalysis" class="text-sm text-gray-400">Check Security Headers</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Advanced Settings -->
+                <div>
+                    <h3 class="text-lg font-medium mb-3 text-gray-300">Advanced</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="saveHistory" class="mr-2" checked>
+                            <label for="saveHistory" class="text-sm text-gray-400">Save Scan History</label>
+                        </div>
+                        <div>
+                            <button id="clearHistory" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-md text-sm">Clear Scan History</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-8">
+                <button id="saveSettings" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md">Save Settings</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Main Content -->
     <main class="flex-1 flex flex-col items-center justify-start px-4 py-8">
@@ -102,23 +289,20 @@
 
             <!-- Results Section -->
             <div id="resultsContainer" class="results-container hidden">
+                <!-- Content will be dynamically added by JavaScript -->
+            </div>
+            
+            <!-- History Section -->
+            <div id="historyContainer" class="results-container hidden">
                 <div class="bg-[#40414f] rounded-lg p-6">
-                    <h2 class="text-xl font-semibold mb-4">Scan Results</h2>
-                    
-                    <!-- GitHub Exploits -->
-                    <div class="mb-6">
-                        <h3 class="text-lg font-medium mb-3 text-gray-300">Known Exploits Found</h3>
-                        <div id="exploitsList" class="space-y-3">
-                            <!-- Exploit items will be added here -->
-                        </div>
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-semibold">Scan History</h2>
+                        <button id="closeHistory" class="text-gray-400 hover:text-white">
+                            <i class="fas fa-times"></i>
+                        </button>
                     </div>
-
-                    <!-- Scanned Pages -->
-                    <div>
-                        <h3 class="text-lg font-medium mb-3 text-gray-300">Scanned Pages</h3>
-                        <div id="pagesList" class="space-y-2">
-                            <!-- Scanned pages will be added here -->
-                        </div>
+                    <div id="historyList" class="space-y-3">
+                        <!-- History items will be added here -->
                     </div>
                 </div>
             </div>
@@ -126,9 +310,9 @@
     </main>
 
     <!-- Footer -->
-    <footer class="py-4 text-center text-xs text-gray-500">
+    <footer class="py-4 text-center text-xs text-gray-500 border-t border-gray-600/20">
         <p>
-            BugHunter GPT - Responsible vulnerability scanning tool
+            BugHunter GPT - Advanced web vulnerability scanner
         </p>
         <div class="mt-1 flex items-center justify-center gap-2">
             <a href="#" class="hover:text-gray-300 transition-colors">Terms</a>
@@ -136,6 +320,9 @@
             <a href="#" class="hover:text-gray-300 transition-colors">Privacy</a>
             <span class="w-1 h-1 bg-gray-500 rounded-full"></span>
             <a href="#" class="hover:text-gray-300 transition-colors">Help</a>
+        </div>
+        <div class="mt-2">
+            <span class="text-gray-400">v2.0.0</span>
         </div>
     </footer>
 
