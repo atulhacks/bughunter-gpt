@@ -14,7 +14,7 @@ We take the security of BugHunter GPT seriously. If you believe you have found a
 
 **Please do not report security vulnerabilities through public GitHub issues.**
 
-Instead, please report them via email to [your-security-email@example.com]. You should receive a response within 48 hours. If for some reason you do not, please follow up via email to ensure we received your original message.
+Instead, please report them via email to [atulhack@proton.me]. You should receive a response within 48 hours. If for some reason you do not, please follow up via email to ensure we received your original message.
 
 Please include the following information in your report:
 
